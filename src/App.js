@@ -6,8 +6,8 @@ import Words from './words';
 
 function App() {
   let [searchParams, setSearchParams] = useSearchParams();
-  const [loading, setLoading] = useState(false);
-  const [{answers, sorted, possibleAnswers}, setWordleState] = useState({ answers: [], occurrences: {}, rankings: {}, sorted: [], possibleAnswers: []})
+  const [defaultValue, setDefaultValue] = useState('');
+  const [{ answers, sorted, possibleAnswers}, setWordleState] = useState({ answers: [], occurrences: {}, rankings: {}, sorted: [], possibleAnswers: []})
   const [correct1, setCorrect1] = useState('');
   const [correct2, setCorrect2] = useState('');
   const [correct3, setCorrect3] = useState('');
@@ -22,47 +22,22 @@ function App() {
 
 
   useEffect(() => {
-    if (sorted.length === 0) {
-      return;
-    }
-    const possibleAnswers = sorted.filter((answer) => {
-      return answer[0].includes(correct1) &&
-      answer[1].includes(correct2) &&
-      answer[2].includes(correct3) &&
-      answer[3].includes(correct4) &&
-      answer[4].includes(correct5) &&
-      [...omit].every(omitted => !answer.includes(omitted)) &&
-      (!contains1.includes(answer[0]) && [...contains1].every(contain => answer.includes(contain))) &&
-      (!contains2.includes(answer[1]) && [...contains2].every(contain => answer.includes(contain))) &&
-      (!contains3.includes(answer[2]) && [...contains3].every(contain => answer.includes(contain))) &&
-      (!contains4.includes(answer[3]) && [...contains4].every(contain => answer.includes(contain))) &&
-      (!contains5.includes(answer[4]) && [...contains5].every(contain => answer.includes(contain)))
-    });
-    setWordleState((curr) => ({...curr, possibleAnswers}));
-  }, [sorted, correct1, correct2, correct3, correct4, correct5, contains1, contains2, contains3, contains4, contains5, omit])
-  
-  useEffect(() => {
-    const data = searchParams.get('data');
-    if (!data) {
-      setSearchParams({})
-      return
-    }
-
     try {
-      const answers = atob(data).split(',');
-    setAnswers(answers.filter(word => word.length===5));
-    } catch {
-      setSearchParams({})
-    }
-    
-
-  }, [searchParams,setSearchParams])
-
-  const setAnswers = (answers) => {
-    setLoading(true);
-    try {
+      const possibleAnswers = answers.filter((answer) => {
+        return answer[0].includes(correct1) &&
+        answer[1].includes(correct2) &&
+        answer[2].includes(correct3) &&
+        answer[3].includes(correct4) &&
+        answer[4].includes(correct5) &&
+        [...omit].every(omitted => !answer.includes(omitted)) &&
+        (!contains1.includes(answer[0]) && [...contains1].every(contain => answer.includes(contain))) &&
+        (!contains2.includes(answer[1]) && [...contains2].every(contain => answer.includes(contain))) &&
+        (!contains3.includes(answer[2]) && [...contains3].every(contain => answer.includes(contain))) &&
+        (!contains4.includes(answer[3]) && [...contains4].every(contain => answer.includes(contain))) &&
+        (!contains5.includes(answer[4]) && [...contains5].every(contain => answer.includes(contain)))
+      });
       const occurrences = {};
-      answers.forEach(answer => {
+      possibleAnswers.forEach(answer => {
         [...answer].forEach(letter => {
           if (typeof occurrences[letter] !== 'undefined' ) {
             occurrences[letter] = occurrences[letter]+1;
@@ -72,25 +47,41 @@ function App() {
         })
       });
     
-      const rankings = answers.reduce((res, cur) => {
+      const rankings = possibleAnswers.reduce((res, cur) => {
         let ranking = 0;
         let str = [...cur];
-        str = new Set(str);      
+        str = new Set(str);
         str.forEach((ltr) => ranking += occurrences[ltr])
     
         return {[cur]: ranking, ...res};
       }, {});
     
-      const sorted = [...answers].sort((a, b) => {
+      const sorted = possibleAnswers.sort((a, b) => {
         return rankings[b] - rankings[a];
       });
-      setWordleState({ answers, occurrences, rankings, sorted, possibleAnswers: []});
+      setWordleState((curr) => ({ ...curr, possibleAnswers, occurrences, rankings, sorted}));
     } catch {}
-    finally {
-      setLoading(false)
+    
+  }, [answers, sorted, correct1, correct2, correct3, correct4, correct5, contains1, contains2, contains3, contains4, contains5, omit])
+  
+  useEffect(() => {
+    const data = searchParams.get('data');
+    if (!data) {
+      setSearchParams({})
+      return
+    }
+
+    try {
+      setDefaultValue(data);
+      const answers = atob(data).split(',').filter(word => word.length===5);
+      setDefaultValue(answers.join(','));
+      setWordleState(curr => ({...curr, answers}))
+    } catch {
+      setSearchParams({})
     }
     
-  };
+
+  }, [searchParams,setSearchParams])
 
   const onUpdate = (answers) => {
     setSearchParams({data: btoa(answers)})
@@ -133,7 +124,7 @@ function App() {
       <div>{possibleAnswers.length > 0 && possibleAnswers[0]}</div>
         <h2>POSSIBLE ANSWERS ({possibleAnswers.length}):</h2>
         {possibleAnswers && possibleAnswers.map((poss) => <div key={poss}>{poss}</div>)}
-      <Words onSubmit={onUpdate} disabled={loading} defaultValue={answers.join(',')}/>
+      <Words onSubmit={onUpdate} defaultValue={defaultValue}/>
     </div>
   );
 }

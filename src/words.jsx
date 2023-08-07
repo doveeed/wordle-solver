@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 
-export default function Words({onSubmit, disabled, defaultValue}) {
+export default function Words({onSubmit, defaultValue}) {
 
     const  [value, setValue] = useState(defaultValue);
 
@@ -21,7 +21,7 @@ export default function Words({onSubmit, disabled, defaultValue}) {
       <div style={{display: 'flex', flexDirection: 'column', textAlign: 'center'}}>
         <h2>DATA:</h2>
         <textarea onChange={handleChange} type="text" value={value} style={{width: '500px', minHeight: '250px'}} />
-        <button style={{width: '500px'}}  onClick={() => onSubmit(value.split(',').filter(word => word.length === 5))} disabled={disabled}>update</button>
+        <button style={{width: '500px'}}  onClick={() => onSubmit(value.split(',').filter(word => word.length === 5))} >update</button>
       </div>
     );
 };
