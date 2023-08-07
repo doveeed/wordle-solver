@@ -9,5 +9,5 @@ export default function Omit({value, onChange}) {
          str = new Set(str);
          onChange([...str].join(''))
     }
-    return <input onChange={handleChange} type="text" value={value} style={{height: '80px', width: '500px', textAlign: 'center', fontSize: '48px', margin: '10px', border: 'none', color: 'white', fontWeight:'bold', background: 'darkgray'}} />
+    return <input onChange={handleChange} type="text" value={value} style={{height: '80px', width: '500px', textAlign: 'center', fontSize: '48px', margin: '10px', border: 'none', color: 'white', fontWeight:'bold', background: '#3a3a3c'}} />
 };
