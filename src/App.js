@@ -7,7 +7,8 @@ import Words from './words';
 function App() {
   let [searchParams, setSearchParams] = useSearchParams();
   const [defaultValue, setDefaultValue] = useState('');
-  const [{ answers, sorted, possibleAnswers}, setWordleState] = useState({ answers: [], occurrences: {}, rankings: {}, sorted: [], possibleAnswers: []})
+  const [{ answers, possibleAnswers}, setWordleState] = useState({ answers: [], occurrences: {}, rankings: {}, possibleAnswers: []})
+  const [showMore, setShowMore] = useState(false);
   const [correct1, setCorrect1] = useState('');
   const [correct2, setCorrect2] = useState('');
   const [correct3, setCorrect3] = useState('');
@@ -37,6 +38,7 @@ function App() {
         (!contains5.includes(answer[4]) && [...contains5].every(contain => answer.includes(contain)))
       });
       const occurrences = {};
+      const positions = {};
       possibleAnswers.forEach(answer => {
         [...answer].forEach(letter => {
           if (typeof occurrences[letter] !== 'undefined' ) {
@@ -46,23 +48,49 @@ function App() {
           occurrences[letter] = 0;
         })
       });
+
+      possibleAnswers.forEach(answer => {
+        [...answer].forEach((letter, position) => {
+          if (positions[letter] === undefined) {
+            positions[letter] = {
+              [position]: 0,
+            }
+            return;
+          } else if (positions[letter][position] === undefined) {
+            positions[letter][position] = 0;
+          } else {
+            positions[letter][position] = positions[letter][position] + 1;
+          }
+        })
+      });
     
       const rankings = possibleAnswers.reduce((res, cur) => {
         let ranking = 0;
-        let str = [...cur];
-        str = new Set(str);
-        str.forEach((ltr) => ranking += occurrences[ltr])
+        const str = [...cur];
+        const uniq = new Set(str);
+        uniq.forEach((ltr) => ranking += occurrences[ltr])
     
         return {[cur]: ranking, ...res};
       }, {});
     
-      const sorted = possibleAnswers.sort((a, b) => {
-        return rankings[b] - rankings[a];
+      possibleAnswers.sort((a, b) => {
+        if (rankings[a] !== rankings[b]) {
+          return rankings[b] - rankings[a];
+        }
+
+        let tiebrakerA = 0;
+        [...a].forEach((ltr, position) => tiebrakerA += positions[ltr][position])
+
+        let tiebrakerB = 0;
+        [...b].forEach((ltr, position) => tiebrakerB += positions[ltr][position])
+
+        return tiebrakerB - tiebrakerA;
+        
       });
-      setWordleState((curr) => ({ ...curr, possibleAnswers, occurrences, rankings, sorted}));
-    } catch {}
+      setWordleState((curr) => ({ ...curr, possibleAnswers, occurrences, rankings}));
+    } catch (e){console.log(e)}
     
-  }, [answers, sorted, correct1, correct2, correct3, correct4, correct5, contains1, contains2, contains3, contains4, contains5, omit])
+  }, [answers, correct1, correct2, correct3, correct4, correct5, contains1, contains2, contains3, contains4, contains5, omit])
   
   useEffect(() => {
     const data = searchParams.get('data');
@@ -101,6 +129,8 @@ function App() {
     setOmit('');
   }
 
+  const possibleAnswersDisplay = showMore ? possibleAnswers : possibleAnswers.slice(0,9);
+
   return (
     <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}} >
       <h1>Wordle solver</h1>
@@ -123,7 +153,8 @@ function App() {
       <h2>BEST GUESS:</h2>
       <div>{possibleAnswers.length > 0 && possibleAnswers[0]}</div>
         <h2>POSSIBLE ANSWERS ({possibleAnswers.length}):</h2>
-        {possibleAnswers && possibleAnswers.map((poss) => <div key={poss}>{poss}</div>)}
+        {possibleAnswersDisplay.map((poss) => <div key={poss}>{poss}</div>)}
+        <button style={{width: '100px'}}  onClick={() => setShowMore(!showMore)} >show {showMore ? 'less' : 'more'}</button>
       <Words onSubmit={onUpdate} defaultValue={defaultValue}/>
     </div>
   );
